@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>THE WASH 清掃スタッフ</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --bg: #f0f2f5; --card: #fff; --ink: #1a1a1a; --sub: #5f6368; --line: #dadce0;
+    --blue: #1a73e8; --blue-bg: #e8f0fe; --orange: #e8710a; --orange-bg: #fef1e6;
+    --green: #188038; --green-bg: #e6f4ea; --red: #c5221f; --red-bg: #fce8e6;
+    --yellow: #b06000; --yellow-bg: #fef7e0; --gray-bg: #f1f3f4;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-size: 15px; padding-bottom: 84px; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 12px 16px; }
+  .wrap.wide { max-width: 1100px; }
+  header { background: var(--blue); color: #fff; padding: 12px 16px; }
+  header .in { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  header b { font-size: 16px; }
+  header small { opacity: .85; font-size: 12px; display: block; }
+  #clock { font-size: 22px; font-weight: bold; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+
+  .card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--line); }
+  .card h3 { margin: 0 0 10px; font-size: 15px; }
+  .muted { color: var(--sub); font-size: 13px; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: bold; white-space: nowrap; }
+  .c-ok { background: var(--green-bg); color: var(--green); }
+  .c-yet { background: var(--yellow-bg); color: var(--yellow); }
+  .c-ng { background: var(--red-bg); color: var(--red); }
+  .c-blue { background: var(--blue-bg); color: var(--blue); }
+  .c-gray { background: var(--gray-bg); color: var(--sub); }
+
+  label { font-size: 13px; font-weight: bold; display: block; margin: 12px 0 6px; color: var(--sub); }
+  select, input, textarea { width: 100%; padding: 12px; font-size: 16px; border: 1.5px solid var(--line);
+    border-radius: 10px; background: #fff; font-family: inherit; color: var(--ink); }
+  textarea { min-height: 70px; }
+  button { font-family: inherit; cursor: pointer; }
+  .btn { border: none; border-radius: 10px; padding: 12px 14px; font-size: 15px; font-weight: bold; color: #fff; background: var(--blue); }
+  .btn.green { background: var(--green); } .btn.orange { background: var(--orange); }
+  .btn.ghost { background: var(--gray-bg); color: var(--ink); }
+  .btn.red { background: var(--red); }
+  .btn.sm { padding: 7px 10px; font-size: 13px; border-radius: 8px; }
+  .btn:disabled { opacity: .45; }
+  .btn.block { width: 100%; }
+  .btns { display: flex; gap: 10px; }
+  .btns > * { flex: 1; }
+  .punch { padding: 22px 0; font-size: 20px; border-radius: 14px; }
+  .punch small { display: block; font-size: 12px; font-weight: normal; opacity: .9; margin-top: 2px; }
+
+  .seg { display: flex; background: var(--gray-bg); border-radius: 10px; padding: 3px; gap: 3px; overflow-x: auto; }
+  .seg button { flex: 1; border: none; background: transparent; padding: 9px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; color: var(--sub); white-space: nowrap; }
+  .seg button.on { background: #fff; color: var(--blue); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+
+  .checks .ci { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1.5px solid var(--line);
+    border-radius: 10px; margin-bottom: 6px; background: #fff; font-size: 15px; user-select: none; }
+  .checks .ci.on { border-color: var(--green); background: var(--green-bg); color: var(--green); font-weight: bold; }
+  .checks .ci i { font-style: normal; width: 22px; text-align: center; }
+
+  /* カレンダー */
+  .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cal-head b { font-size: 17px; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal .dow { text-align: center; font-size: 11px; font-weight: bold; color: var(--sub); padding: 3px 0; }
+  .cal .dow.su, .cal .d.su .n { color: var(--red); } .cal .dow.sa, .cal .d.sa .n { color: var(--blue); }
+  .cal .d { min-height: 54px; background: #fff; border: 1px solid #e8eaed; border-radius: 8px; padding: 3px 2px;
+    display: flex; flex-direction: column; align-items: center; font-size: 14px; user-select: none; }
+  .cal .d.x { background: transparent; border: none; }
+  .cal .d.today { border: 2px solid var(--blue); }
+  .cal .d.past { opacity: .55; }
+  .cal .d .tag { font-size: 10px; font-weight: bold; border-radius: 4px; padding: 0 3px; margin-top: 2px; white-space: nowrap; }
+  .cal .d.want { background: var(--yellow-bg); border-color: #f9d27a; }
+  .cal .d.fixd { background: var(--green-bg); border-color: #a8d5b5; }
+  .cal .d.ng { background: var(--gray-bg); }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--sub); margin-top: 8px; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; background: var(--c); }
+
+  .list .it { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f1f3f4; }
+  .list .it:last-child { border-bottom: none; }
+
+  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line);
+    display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 10; }
+  nav.tabs button { flex: 1; border: none; background: none; padding: 9px 0 8px; font-size: 11px; color: var(--sub); font-weight: bold; position: relative; }
+  nav.tabs button .ic { display: block; font-size: 20px; line-height: 1.2; }
+  nav.tabs button.on { color: var(--blue); }
+  nav.tabs .badge { position: absolute; top: 4px; left: 55%; background: var(--red); color: #fff; font-size: 10px; border-radius: 99px; padding: 0 5px; }
+
+  #toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); max-width: 90%; background: #202124; color: #fff;
+    padding: 12px 16px; border-radius: 10px; font-size: 14px; z-index: 50; display: none; text-align: center; line-height: 1.5; }
+  #toast.err { background: var(--red); }
+  #loading { position: fixed; inset: 0; background: rgba(255,255,255,.6); display: none; align-items: center; justify-content: center; z-index: 40; }
+  #loading div { width: 36px; height: 36px; border: 4px solid var(--blue-bg); border-top-color: var(--blue); border-radius: 50%; animation: sp 0.8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; align-items: flex-end; justify-content: center; z-index: 30; }
+  .modal { background: #fff; width: 100%; max-width: 520px; border-radius: 16px 16px 0 0; padding: 16px; max-height: 88vh; overflow-y: auto; }
+  @media (min-width: 700px) { .modal-bg { align-items: center; } .modal { border-radius: 16px; } }
+
+  /* 管理：KPI */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .kpi { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; }
+  .kpi .v { font-size: 26px; font-weight: bold; font-variant-numeric: tabular-nums; }
+  .kpi .l { font-size: 12px; color: var(--sub); }
+  .kpi.alert .v { color: var(--red); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .filters select, .filters input { width: auto; padding: 8px 10px; font-size: 14px; }
+  .filters label { margin: 0; display: flex; gap: 4px; align-items: center; font-size: 13px; }
+  .filters input[type=checkbox] { width: auto; }
+
+  /* 管理：表 */
+  .tbl-wrap { overflow-x: auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid #f1f3f4; text-align: left; white-space: nowrap; }
+  th { background: #f8f9fa; font-size: 12px; color: var(--sub); position: sticky; top: 0; cursor: pointer; user-select: none; }
+  th.sorted::after { content: " ▼"; } th.sorted.asc::after { content: " ▲"; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.bad td { background: #fffaf5; }
+
+  /* 管理：シフト表 */
+  .grid { border-collapse: separate; border-spacing: 0; }
+  .grid th, .grid td { padding: 0; border-bottom: 1px solid #eee; border-right: 1px solid #f3f3f3; text-align: center; }
+  .grid th { padding: 4px 0; min-width: 32px; cursor: default; }
+  .grid th.su { color: var(--red); } .grid th.sa { color: var(--blue); }
+  .grid .nm { position: sticky; left: 0; background: #fff; z-index: 2; text-align: left; padding: 6px 8px; min-width: 112px; font-weight: bold; font-size: 12px; }
+  .grid thead .nm { background: #f8f9fa; z-index: 3; }
+  .grid td.cell { width: 32px; height: 34px; cursor: pointer; font-size: 11px; font-weight: bold; }
+  .grid td.cell.want { background: var(--yellow-bg); color: var(--yellow); }
+  .grid td.cell.fixd { background: var(--green-bg); color: var(--green); }
+  .grid td.cell.ng { background: var(--gray-bg); color: #999; }
+  .grid td.cell.today { box-shadow: inset 0 0 0 2px var(--blue); }
+  .grid tr.tot td { font-size: 11px; color: var(--sub); }
+  .stores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .hide { display: none !important; }
+</style>
+</head>
+<body>
+
+<header><div class="in">
+  <div><b>THE WASH 清掃スタッフ</b><small id="who">読み込み中…</small></div>
+  <div id="clock">--:--</div>
+</div></header>
+
+<main id="app"></main>
+
+<nav class="tabs hide" id="tabs"></nav>
+<div id="toast"></div>
+<div id="loading"><div></div></div>
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<!-- ローカルのデモ確認用（実名）。GitHub Pages には置かないので本番では読み込まれない -->
+<script>if (location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) document.write('<script src="demo_names.js"><\/script>');</script>
+<script>
+/* =========================================================
+ * 設定（導入時にここだけ書き換える）
+ * =======================================================*/
+const LIFF_ID = '';   // LINE Developers ＞ LIFF ＞ LIFF ID（例：2001234567-AbCdEfGh）
+const GAS_URL = '';   // GASのウェブアプリURL（https://script.google.com/macros/s/.../exec）
+
+// LIFF_ID が空、または URL に ?demo=1 を付けると、端末内のダミーデータで動くデモモード（見た目確認用）
+const DEMO = !LIFF_ID || new URLSearchParams(location.search).has('demo');
+
+/* =========================================================
+ * 状態
+ * =======================================================*/
+const S = {
+  me: null, tab: 'punch', store: null, checks: {}, home: null,
+  ym: ymOf(new Date()), month: null, shiftStore: null, shiftSel: null, hStore: '',
+  admin: null, aym: ymOf(new Date()), aStore: '', aStaff: '', onlyBad: false, sort: { key: 'date', asc: true }, sumView: 'staff'
+};
+
+/* =========================================================
+ * 共通
+ * =======================================================*/
+const $ = s => document.querySelector(s);
+// localStorage が使えない環境（プライベートモード等）でも落ちないように
+const kv = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } } };
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function ymOf(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+function addYm(ym, k) { const [y, m] = ym.split('-').map(Number); return ymOf(new Date(y, m - 1 + k, 1)); }
+function ymLabel(ym) { const [y, m] = ym.split('-'); return y + '年' + Number(m) + '月'; }
+function ds(d) { return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0'); }
+function dLabel(s) { const d = new Date(s); return (d.getMonth() + 1) + '/' + d.getDate() + '(' + '日月火水木金土'[d.getDay()] + ')'; }
+function toMin(t) { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; }
+function hm(min) { return Math.floor(min / 60) + ':' + String(min % 60).padStart(2, '0'); }
+function daysOf(ym) { const [y, m] = ym.split('-').map(Number); const n = new Date(y, m, 0).getDate(); return Array.from({ length: n }, (_, i) => ds(new Date(y, m - 1, i + 1))); }
+
+let toastT;
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = err ? 'err' : ''; t.style.display = 'block';
+  clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', err ? 5000 : 3000);
+}
+function loading(on) { $('#loading').style.display = on ? 'flex' : 'none'; }
+function modal(html) { $('#modal').innerHTML = html; $('#modalBg').style.display = html ? 'flex' : 'none'; }
+$('#modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') modal(''); });
+
+setInterval(() => { const d = new Date(); $('#clock').textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }, 1000);
+
+/** API呼び出し：LIFFのIDトークンを付けてGASにPOST */
+async function api(action, params = {}, quiet) {
+  if (!quiet) loading(true);
+  try {
+    if (DEMO) return await Demo.call(action, params);
+    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action, params, idToken: liff.getIDToken() }) });
+    const j = await res.json();
+    if (!j.ok) {
+      // LINEアプリ内では liff.login() が使えないので、ログアウト→再読み込みで新しいトークンを取り直す
+      if (j.error === 'LOGIN_EXPIRED') { toast('ログインの有効期限が切れました。開き直します', true); setTimeout(() => { liff.logout(); liff.isInClient() ? location.reload() : liff.login({ redirectUri: location.href }); }, 1200); }
+      throw new Error(j.error);
+    }
+    return j.data;
+  } catch (e) {
+    toast(e.message === 'Failed to fetch' ? '通信できませんでした。電波を確認してもう一度' : e.message, true);
+    throw e;
+  } finally { if (!quiet) loading(false); }
+}
+
+/* =========================================================
+ * 起動
+ * =======================================================*/
+async function boot() {
+  try {
+    if (!DEMO) {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    }
+    S.me = await api('me');
+    route();
+  } catch (e) {
+    $('#app').innerHTML = `<div class="wrap"><div class="card"><h3>起動できませんでした</h3><p class="muted">${esc(e.message)}</p>
+      <button class="btn block" onclick="location.reload()">再読み込み</button></div></div>`;
+  }
+}
+
+function route() {
+  const me = S.me;
+  $('#who').textContent = me.profile ? me.profile.name + (me.profile.role === 'admin' ? '（管理者）' : '') : (me.lineName || '');
+  if (me.status !== '承認') return renderGate();
+  S.hq = !me.profile.stores.length;   // 店舗に入らない本部管理者
+  if (S.hq && me.profile.role !== 'admin') {
+    $('#app').innerHTML = `<div class="wrap"><div class="card"><h3>担当店舗が未設定です</h3><p class="muted">管理者に担当店舗の設定を依頼してください。</p></div></div>`;
+    return;
+  }
+  if (S.hq) { S.tab = 'admin'; renderTabs(); return go('admin'); }
+  S.store = S.store || kv.get('store') || me.profile.stores[0];
+  if (me.profile.stores.indexOf(S.store) < 0) S.store = me.profile.stores[0];
+  S.shiftStore = S.shiftStore || S.store;
+  renderTabs();
+  go(S.tab);
+}
+
+/* ---------- 未登録・承認待ち ---------- */
+function renderGate() {
+  $('#tabs').classList.add('hide');
+  const me = S.me;
+  if (me.status === '申請中') {
+    $('#app').innerHTML = `<div class="wrap"><div class="card"><h3>⏳ 承認待ちです</h3>
+      <p>管理者が承認すると使えるようになります。承認されたらこの画面を開き直してください。</p>
+      <button class="btn block" onclick="location.reload()">開き直す</button></div></div>`;
+    return;
+  }
+  if (me.status === '停止') {
+    $('#app').innerHTML = `<div class="wrap"><div class="card"><h3>利用停止中です</h3><p class="muted">管理者に連絡してください。</p></div></div>`;
+    return;
+  }
+  const free = me.freeNames || {};
+  const opts = me.config.stores.map(s => `<option>${esc(s)}</option>`).join('') + `<option value="">店舗なし（本部・管理者）</option>`;
+  $('#app').innerHTML = `<div class="wrap"><div class="card"><h3>はじめに：スタッフ登録</h3>
+    <p class="muted">LINEアカウントとスタッフ名を紐付けます（最初の1回だけ）。</p>
+    <label>担当店舗</label><select id="rgStore" onchange="rgNames()">${opts}</select>
+    <label>あなたの名前</label><select id="rgName" onchange="rgToggle()"></select>
+    <div id="rgFreeBox" class="hide"><label>名前（フルネーム）</label><input id="rgFree" placeholder="例：山田 花子"></div>
+    <button class="btn green block" style="margin-top:16px" onclick="doRegister()">登録を申請する</button></div></div>`;
+  window.rgNames = () => {
+    const names = free[$('#rgStore').value] || [];
+    $('#rgName').innerHTML = names.map(n => `<option>${esc(n)}</option>`).join('') + `<option value="__new">リストにない（入力する）</option>`;
+    rgToggle();
+  };
+  window.rgToggle = () => $('#rgFreeBox').classList.toggle('hide', $('#rgName').value !== '__new');
+  rgNames();
+}
+async function doRegister() {
+  const sel = $('#rgName').value;
+  const name = sel === '__new' ? $('#rgFree').value.trim() : sel;
+  if (!name) return toast('名前を入力してください', true);
+  if (!confirm(`「${name}」で登録を申請します`)) return;
+  const msg = await api('register', { name, store: $('#rgStore').value });
+  toast(msg);
+  S.me = await api('me'); route();
+}
+
+/* ---------- タブ ---------- */
+function renderTabs() {
+  const t = S.hq ? [] : [['punch', '⏱', '打刻'], ['shift', '📅', 'シフト'], ['hist', '📋', '履歴']];
+  if (S.me.profile.role === 'admin') t.push(['admin', '🛠', '管理']);
+  $('#tabs').innerHTML = t.map(([k, ic, l]) => `<button data-k="${k}" onclick="go('${k}')"><span class="ic">${ic}</span>${l}<span class="badge hide" id="bd_${k}"></span></button>`).join('');
+  $('#tabs').classList.remove('hide');
+}
+function go(tab) {
+  S.tab = tab;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.k === tab));
+  $('#app').innerHTML = '<div class="wrap"></div>';
+  if (tab === 'shift') S.ym = openYm();
+  ({ punch: loadPunch, shift: loadShift, hist: loadHist, admin: loadAdmin })[tab]();
+  window.scrollTo(0, 0);
+}
+
+/* =========================================================
+ * スタッフ：打刻
+ * =======================================================*/
+async function loadPunch() { S.home = await api('home'); renderPunch(); }
+function renderPunch() {
+  const h = S.home, me = S.me.profile, cfg = S.me.config;
+  const st = h.stores.find(x => x.store === S.store) || h.stores[0];
+  const storeSel = me.stores.length > 1
+    ? `<div class="seg" style="margin-bottom:12px">${me.stores.map(s => `<button class="${s === S.store ? 'on' : ''}" onclick="pickStore('${esc(s)}')">${esc(s)}</button>`).join('')}</div>`
+    : `<div class="muted" style="margin-bottom:8px">店舗：<b>${esc(S.store)}</b></div>`;
+  const inDone = !!st.inTime, outDone = !!st.outTime;
+  const others = h.stores.filter(x => x.store !== S.store && (x.inTime || x.outTime));
+  $('#app').innerHTML = `<div class="wrap">
+    ${storeSel}
+    <div class="card">
+      <div class="row"><h3 style="margin:0">今日 ${dLabel(h.today)}</h3>
+        ${outDone ? '<span class="chip c-ok">完了</span>' : inDone ? '<span class="chip c-blue">清掃中</span>' : '<span class="chip c-yet">未出勤</span>'}</div>
+      <div class="list" style="margin-top:6px">
+        <div class="it"><span>出勤</span><b>${st.inTime || '—'}</b></div>
+        <div class="it"><span>退勤</span><b>${st.outTime || '—'}</b></div>
+        ${inDone && outDone ? `<div class="it"><span>作業時間</span><b>${hm(Math.max(0, toMin(st.outTime) - toMin(st.inTime)))}</b></div>` : ''}
+      </div>
+      ${st.todayShift.length ? `<div class="muted" style="margin-top:6px">今日のシフト：${st.todayShift.map(esc).join('・')}</div>` : `<div class="muted" style="margin-top:6px">今日この店舗の確定シフトはありません</div>`}
+    </div>
+
+    <div class="card ${inDone && !outDone ? '' : 'hide'}">
+      <h3>清掃チェック（退勤前に）</h3>
+      <div class="checks">${cfg.checklist.map(c => `<div class="ci ${S.checks[c] ? 'on' : ''}" onclick="tgCheck('${esc(c)}')"><i>${S.checks[c] ? '✅' : '⬜'}</i>${esc(c)}</div>`).join('')}</div>
+      <div class="muted">${Object.values(S.checks).filter(Boolean).length} / ${cfg.checklist.length} 完了</div>
+    </div>
+
+    <div class="btns">
+      <button class="btn punch" ${inDone ? 'disabled' : ''} onclick="punch('出勤')">出勤<small>${inDone ? st.inTime + ' 記録済み' : 'タップで記録'}</small></button>
+      <button class="btn orange punch" ${outDone ? 'disabled' : ''} onclick="punch('退勤')">退勤<small>${outDone ? st.outTime + ' 記録済み' : 'タップで記録'}</small></button>
+    </div>
+    <p class="muted" style="text-align:center">押し忘れ・押し間違いは「履歴」タブから修正申請</p>
+
+    ${others.length ? `<div class="card"><h3>今日の他店舗の打刻</h3>${others.map(o => `<div class="row"><span>${esc(o.store)}</span><span>${o.inTime || '—'} 〜 ${o.outTime || '—'}</span></div>`).join('')}</div>` : ''}
+
+    <div class="card"><h3>次の確定シフト</h3>
+      ${h.upcoming.length ? `<div class="list">${h.upcoming.map(u => `<div class="it"><span>${dLabel(u.date)}</span><span class="chip c-ok">${esc(u.store)}</span></div>`).join('')}</div>` : '<div class="muted">確定シフトはまだありません</div>'}
+    </div>
+  </div>`;
+}
+function pickStore(s) { S.store = s; S.checks = {}; kv.set('store', s); renderPunch(); }
+function tgCheck(c) { S.checks[c] = !S.checks[c]; renderPunch(); }
+function getPos() {
+  return new Promise(r => {
+    if (!navigator.geolocation) return r({});
+    navigator.geolocation.getCurrentPosition(p => r({ lat: p.coords.latitude.toFixed(5), lng: p.coords.longitude.toFixed(5) }), () => r({}), { timeout: 4000, maximumAge: 60000 });
+  });
+}
+async function punch(type) {
+  const cfg = S.me.config;
+  const checks = cfg.checklist.filter(c => S.checks[c]);
+  if (type === '退勤' && checks.length < cfg.checklist.length) {
+    if (!confirm(`清掃チェックが ${checks.length}/${cfg.checklist.length} です。このまま退勤しますか？`)) return;
+  }
+  if (!confirm(`${S.store}\n${type}を記録します`)) return;
+  loading(true);
+  const pos = await getPos();
+  try {
+    const r = await api(type === '出勤' ? 'punch' : 'punch', { store: S.store, type, checks: type === '退勤' ? checks : [], ...pos }, true);
+    toast((r.duplicated ? '⚠ ' : '✅ ') + r.message, r.duplicated);
+    if (type === '退勤') S.checks = {};
+    S.home = await api('home', {}, true); renderPunch();
+  } catch (e) { } finally { loading(false); }
+}
+
+/* =========================================================
+ * スタッフ：希望シフト提出
+ * =======================================================*/
+// 提出を受け付けている最初の月（締切日までは当月、過ぎたら翌月）
+function openYm() { const d = new Date(); return addYm(ymOf(d), d.getDate() <= S.me.config.deadlineDay ? 0 : 1); }
+async function loadShift() { S.month = await api('myMonth', { ym: S.ym }); S.shiftSel = null; renderShift(); }
+function renderShift() {
+  const m = S.month, me = S.me.profile, today = S.me.today;
+  const mine = m.shifts.filter(s => s.store === S.shiftStore);
+  if (!S.shiftSel) S.shiftSel = new Set(mine.filter(s => s.status === '希望').map(s => s.date));
+  const stat = {}; mine.forEach(s => stat[s.date] = s.status);
+  const other = {}; m.shifts.filter(s => s.store !== S.shiftStore && s.status !== '不可').forEach(s => other[s.date] = s.store);
+  const days = daysOf(S.ym), first = new Date(days[0]).getDay();
+  const cells = Array(first).fill('<div class="d x"></div>').concat(days.map(d => {
+    const dow = new Date(d).getDay();
+    let cls = '', tag = '';
+    if (stat[d] === '確定') { cls = 'fixd'; tag = '<span class="tag c-ok">確定</span>'; }
+    else if (stat[d] === '不可') { cls = 'ng'; tag = '<span class="tag c-gray">不可</span>'; }
+    else if (S.shiftSel.has(d)) { cls = 'want'; tag = '<span class="tag c-yet">希望</span>'; }
+    else if (other[d]) tag = `<span class="tag c-gray">${esc(other[d].replace('店', ''))}</span>`;
+    return `<div class="d ${cls} ${dow === 0 ? 'su' : dow === 6 ? 'sa' : ''} ${d === today ? 'today' : ''} ${d < today ? 'past' : ''}" onclick="tgDay('${d}')"><span class="n">${Number(d.slice(-2))}</span>${tag}</div>`;
+  }));
+  const fixed = mine.filter(s => s.status === '確定').length;
+  $('#app').innerHTML = `<div class="wrap">
+    ${me.stores.length > 1 ? `<div class="seg" style="margin-bottom:12px">${me.stores.map(s => `<button class="${s === S.shiftStore ? 'on' : ''}" onclick="S.shiftStore='${esc(s)}';S.shiftSel=null;renderShift()">${esc(s)}</button>`).join('')}</div>` : ''}
+    <div class="card">
+      <div class="cal-head">
+        <button class="btn ghost sm" onclick="mvYm(-1)">◀</button>
+        <b>${ymLabel(S.ym)}　${esc(S.shiftStore)}</b>
+        <button class="btn ghost sm" onclick="mvYm(1)">▶</button>
+      </div>
+      ${m.locked ? `<div class="chip c-ng" style="margin-bottom:8px">提出締切済み（当月${S.me.config.deadlineDay}日まで）— 変更は管理者へ。${ymLabel(openYm())}分は ▶ で提出できます</div>`
+                 : `<div class="muted" style="margin-bottom:8px">入れる日をタップ → 下の「提出」。締切：${ymLabel(S.ym)}${S.me.config.deadlineDay}日</div>`}
+      <div class="cal">${'日月火水木金土'.split('').map((w, i) => `<div class="dow ${i === 0 ? 'su' : i === 6 ? 'sa' : ''}">${w}</div>`).join('')}${cells.join('')}</div>
+      <div class="legend"><span style="--c:#fef7e0">希望（未確定）</span><span style="--c:#e6f4ea">確定</span><span style="--c:#f1f3f4">不可</span></div>
+    </div>
+    <div class="card row"><span>希望 <b>${S.shiftSel.size}</b>日 ／ 確定 <b>${fixed}</b>日</span>
+      <button class="btn green" ${m.locked ? 'disabled' : ''} onclick="submitShift()">提出する</button></div>
+  </div>`;
+}
+function tgDay(d) {
+  if (S.month.locked) return toast('この月は締切済みです。変更は管理者へ', true);
+  const st = (S.month.shifts.find(s => s.store === S.shiftStore && s.date === d) || {}).status;
+  if (st === '確定' || st === '不可') return toast('管理者が' + st + 'にした日は変更できません', true);
+  if (d < S.me.today) return;
+  S.shiftSel.has(d) ? S.shiftSel.delete(d) : S.shiftSel.add(d);
+  renderShift();
+}
+function mvYm(k) { S.ym = addYm(S.ym, k); loadShift(); }
+async function submitShift() {
+  const msg = await api('submitShifts', { ym: S.ym, store: S.shiftStore, dates: [...S.shiftSel] });
+  toast('✅ ' + msg); loadShift();
+}
+
+/* =========================================================
+ * スタッフ：履歴＋修正申請
+ * =======================================================*/
+async function loadHist() { S.month = await api('myMonth', { ym: S.ym }); renderHist(); }
+function renderHist() {
+  const m = S.month;
+  const by = {};
+  m.punches.forEach(p => { const k = p.date + '|' + p.store; (by[k] = by[k] || { date: p.date, store: p.store })[p.type] = p.time; });
+  const all = Object.values(by).sort((a, b) => a.date < b.date ? 1 : -1);
+  // 店舗ごとの出勤日数・作業時間・確定シフト（掛け持ちは店舗別に出す）
+  const stat = st => {
+    const rs = all.filter(r => !st || r.store === st);
+    return { days: rs.filter(r => r['出勤']).length,
+      min: rs.reduce((s, r) => s + (r['出勤'] && r['退勤'] ? Math.max(0, toMin(r['退勤']) - toMin(r['出勤'])) : 0), 0),
+      plan: m.shifts.filter(s => s.status === '確定' && (!st || s.store === st)).length };
+  };
+  const stores = [...new Set([...S.me.profile.stores, ...all.map(r => r.store), ...m.shifts.map(s => s.store)])];
+  if (!stores.includes(S.hStore)) S.hStore = '';
+  const multi = stores.length > 1, t = stat(S.hStore), rows = all.filter(r => !S.hStore || r.store === S.hStore);
+  $('#app').innerHTML = `<div class="wrap">
+    ${multi ? `<div class="seg" style="margin-bottom:12px">${['', ...stores].map(st => `<button class="${S.hStore === st ? 'on' : ''}" onclick="S.hStore='${esc(st)}';renderHist()">${st ? esc(st) : '合計'}</button>`).join('')}</div>` : ''}
+    <div class="card">
+      <div class="cal-head"><button class="btn ghost sm" onclick="S.ym=addYm(S.ym,-1);loadHist()">◀</button><b>${ymLabel(S.ym)}${S.hStore ? '　' + esc(S.hStore) : ''}</b><button class="btn ghost sm" onclick="S.ym=addYm(S.ym,1);loadHist()">▶</button></div>
+      <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+        <div class="kpi"><div class="v">${t.days}</div><div class="l">出勤日数</div></div>
+        <div class="kpi"><div class="v">${hm(t.min)}</div><div class="l">作業時間</div></div>
+        <div class="kpi"><div class="v">${t.plan}</div><div class="l">確定シフト</div></div>
+      </div>
+      ${multi && !S.hStore ? `<div class="tbl-wrap" style="margin-bottom:10px"><table><thead><tr><th>店舗</th><th class="num">出勤日数</th><th class="num">作業時間</th><th class="num">確定シフト</th></tr></thead>
+        <tbody>${stores.map(st => { const x = stat(st); return `<tr onclick="S.hStore='${esc(st)}';renderHist()"><td><b>${esc(st)}</b></td><td class="num">${x.days}</td><td class="num">${hm(x.min)}</td><td class="num">${x.plan}</td></tr>`; }).join('')}</tbody></table></div>` : ''}
+      <div class="list">${rows.length ? rows.map(r => `<div class="it"><div><b>${dLabel(r.date)}</b> <span class="muted">${esc(r.store)}</span></div>
+        <div>${r['出勤'] || '<span class="chip c-ng">出勤なし</span>'} 〜 ${r['退勤'] || '<span class="chip c-ng">退勤なし</span>'}</div></div>`).join('') : '<div class="muted">打刻はありません</div>'}</div>
+    </div>
+    <button class="btn orange block" onclick="fixForm()">打刻の修正を申請する</button>
+    ${m.fixes.length ? `<div class="card" style="margin-top:12px"><h3>修正申請</h3><div class="list">${m.fixes.map(f => `<div class="it"><div>${dLabel(f.date)} ${esc(f.store)}<br><span class="muted">${esc(f.type)} ${esc(f.time)}・${esc(f.reason)}</span></div>
+      <span class="chip ${f.status === '承認' ? 'c-ok' : f.status === '却下' ? 'c-ng' : 'c-yet'}">${esc(f.status)}</span></div>`).join('')}</div></div>` : ''}
+  </div>`;
+}
+function fixForm() {
+  const me = S.me.profile;
+  modal(`<h3>打刻の修正申請</h3>
+    <label>日付</label><input type="date" id="fxDate" value="${S.me.today.replace(/\//g, '-')}" max="${S.me.today.replace(/\//g, '-')}">
+    <label>店舗</label><select id="fxStore">${me.stores.map(s => `<option>${esc(s)}</option>`).join('')}</select>
+    <label>種別</label><div class="seg" id="fxType"><button class="on" onclick="segPick(this)">出勤</button><button onclick="segPick(this)">退勤</button></div>
+    <label>正しい時刻</label><input type="time" id="fxTime">
+    <label>理由</label><textarea id="fxReason" placeholder="例：押し忘れ"></textarea>
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="modal('')">やめる</button><button class="btn orange" onclick="sendFix()">申請する</button></div>`);
+}
+function segPick(b) { b.parentNode.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }
+async function sendFix() {
+  const p = { date: $('#fxDate').value.replace(/-/g, '/'), store: $('#fxStore').value, type: $('#fxType .on').textContent, time: $('#fxTime').value, reason: $('#fxReason').value };
+  const msg = await api('requestFix', p);
+  modal(''); toast('✅ ' + msg); loadHist();
+}
+
+/* =========================================================
+ * 管理画面
+ * =======================================================*/
+async function loadAdmin(quiet) {
+  S.admin = await api('adminData', { ym: S.aym }, quiet);
+  S.aTab = S.aTab || 'dash';
+  renderAdmin();
+}
+function A() { return S.admin; }
+
+/** 勤怠の行（店舗×スタッフ×日）＋異常判定 */
+// 打刻位置と店舗の距離（m）。位置なし・店舗座標なしは -1
+function storeDist(store, p) {
+  const g = (S.me.config.geo || {})[store];
+  if (!g || !p || !p.lat || !p.lng) return -1;
+  const rad = x => x * Math.PI / 180, dLat = rad(p.lat - g[0]), dLng = rad(p.lng - g[1]);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(g[0])) * Math.cos(rad(+p.lat)) * Math.sin(dLng / 2) ** 2;
+  return Math.round(12742000 * Math.asin(Math.sqrt(h)));
+}
+function attRows() {
+  const a = A(), pre = S.aym.replace('-', '/') + '/', today = a.today;
+  const m = {};
+  const key = (d, st, n) => d + '|' + st + '|' + n;
+  a.shifts.filter(s => s.date.startsWith(pre) && s.status === '確定').forEach(s => {
+    (m[key(s.date, s.store, s.staff)] = m[key(s.date, s.store, s.staff)] || { date: s.date, store: s.store, staff: s.staff }).plan = true;
+  });
+  a.punches.filter(p => p.date.startsWith(pre)).forEach(p => {
+    const o = m[key(p.date, p.store, p.staff)] = m[key(p.date, p.store, p.staff)] || { date: p.date, store: p.store, staff: p.staff };
+    o[p.type === '出勤' ? 'in' : 'out'] = p.time;
+    if (p.type === '出勤') o.inP = p; else o.outP = p;
+    if (p.kind && p.kind !== 'LIFF') o.edited = (o.edited ? o.edited + '・' : '') + p.kind;
+  });
+  return Object.values(m).map(o => {
+    o.min = o.in && o.out ? Math.max(0, toMin(o.out) - toMin(o.in)) : null;
+    const f = [];
+    if (o.plan && !o.in && !o.out && o.date < today) f.push('欠勤?');
+    if (o.in && !o.out && o.date < today) f.push('退勤漏れ');
+    if (!o.in && o.out) f.push('出勤漏れ');
+    if (!o.plan && (o.in || o.out)) f.push('シフト外');
+    if (o.min != null && o.min < 15) f.push('短時間');
+    o.dist = Math.max(storeDist(o.store, o.inP), storeDist(o.store, o.outP));
+    if (o.dist >= (S.me.config.geoRadius || 200)) f.push('店舗外');
+    o.flags = f;
+    o.checks = o.outP ? o.outP.checks : '';
+    o.checkNg = o.outP && o.outP.kind === 'LIFF' && (o.checks ? o.checks.split('、').length : 0) < S.me.config.checklist.length;
+    if (o.checkNg) f.push('チェック不足');
+    return o;
+  });
+}
+
+/** スタッフ別集計 */
+function sumRows() {
+  // スタッフ×店舗で1行（掛け持ちは店舗ごとに分ける）
+  const a = A(), rows = attRows(), m = {};
+  const row = (staff, store) => ({ staff, stores: store, plan: 0, days: 0, min: 0, bad: 0, prev: a.prevDays[staff + '|' + store] || 0 });
+  // 停止（退職）者は、その月に打刻・シフトがある時だけ行が出る（下の rows で作られる）
+  a.staff.filter(s => s.status !== '停止').forEach(s => s.stores.forEach(st => m[s.name + '|' + st] = row(s.name, st)));
+  rows.forEach(r => {
+    const k = r.staff + '|' + r.store, o = m[k] = m[k] || row(r.staff, r.store);
+    if (r.plan) o.plan++;
+    if (r.in) o.days++;
+    if (r.min) o.min += r.min;
+    if (r.flags.length) o.bad++;
+  });
+  return Object.values(m).filter(o => !S.aStore || o.stores === S.aStore);
+}
+
+function renderAdmin() {
+  const a = A();
+  const pendStaff = a.staff.filter(s => s.status === '申請中').length;
+  const pendFix = a.fixes.filter(f => f.status === '申請中').length;
+  const bd = $('#bd_admin'); if (bd) { bd.textContent = pendStaff + pendFix; bd.classList.toggle('hide', !(pendStaff + pendFix)); }
+  const tabs = [['dash', '今日'], ['shift', 'シフト表'], ['att', '勤怠'], ['sum', '集計'], ['req', '承認' + (pendStaff + pendFix ? `(${pendStaff + pendFix})` : '')], ['staff', 'スタッフ']];
+  const ymBar = S.aTab === 'dash' || S.aTab === 'req' || S.aTab === 'staff' ? '' :
+    `<button class="btn ghost sm" onclick="S.aym=addYm(S.aym,-1);loadAdmin()">◀</button><b>${ymLabel(S.aym)}</b><button class="btn ghost sm" onclick="S.aym=addYm(S.aym,1);loadAdmin()">▶</button>`;
+  const storeSel = `<select onchange="S.aStore=this.value;renderAdmin()"><option value="">全店舗</option>${a.stores.map(s => `<option ${s === S.aStore ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>`;
+  $('#app').innerHTML = `<div class="wrap wide">
+    <div class="seg" style="margin-bottom:12px">${tabs.map(([k, l]) => `<button class="${S.aTab === k ? 'on' : ''}" onclick="S.aTab='${k}';renderAdmin()">${l}</button>`).join('')}</div>
+    <div class="filters">${ymBar}${S.aTab !== 'req' ? storeSel : ''}<span id="aExtra" style="display:contents"></span>
+      <button class="btn ghost sm" style="margin-left:auto" onclick="loadAdmin()">↻ 更新</button></div>
+    <div id="aBody"></div></div>`;
+  ({ dash: aDash, shift: aShift, att: aAtt, sum: aSum, req: aReq, staff: aStaff })[S.aTab]();
+}
+
+/* ---------- 今日 ---------- */
+function aDash() {
+  const a = A(), today = a.today;
+  const rowsMonth = S.aym === a.today.slice(0, 7).replace('/', '-') ? attRows() : [];
+  const bad = rowsMonth.filter(r => r.flags.length && r.date < today).length;
+  const pendStaff = a.staff.filter(s => s.status === '申請中').length;
+  const pendFix = a.fixes.filter(f => f.status === '申請中').length;
+  const want = a.shifts.filter(s => s.status === '希望').length;
+  const stores = a.stores.filter(s => !S.aStore || s === S.aStore);
+  const cards = stores.map(st => {
+    const plan = a.shifts.filter(s => s.date === today && s.store === st && s.status === '確定').map(s => s.staff);
+    const ps = a.punches.filter(p => p.date === today && p.store === st);
+    const names = [...new Set(plan.concat(ps.map(p => p.staff)))];
+    const body = names.length ? names.map(n => {
+      const i = ps.find(p => p.staff === n && p.type === '出勤'), o = ps.find(p => p.staff === n && p.type === '退勤');
+      const chip = o ? '<span class="chip c-ok">完了</span>' : i ? '<span class="chip c-blue">清掃中</span>' : '<span class="chip c-yet">未出勤</span>';
+      return `<div class="it"><div>${esc(n)}${plan.includes(n) ? '' : ' <span class="chip c-gray">シフト外</span>'}<br><span class="muted">${i ? i.time : '—'} 〜 ${o ? o.time : '—'}</span></div>${chip}</div>`;
+    }).join('') : '<div class="muted">今日の予定なし</div>';
+    return `<div class="card"><h3>${esc(st)}</h3><div class="list">${body}</div></div>`;
+  }).join('');
+  $('#aBody').innerHTML = `
+    <div class="kpis">
+      <div class="kpi ${pendStaff ? 'alert' : ''}" onclick="S.aTab='req';renderAdmin()"><div class="v">${pendStaff}</div><div class="l">登録承認待ち</div></div>
+      <div class="kpi ${pendFix ? 'alert' : ''}" onclick="S.aTab='req';renderAdmin()"><div class="v">${pendFix}</div><div class="l">打刻修正申請</div></div>
+      <div class="kpi ${bad ? 'alert' : ''}" onclick="S.aTab='att';S.onlyBad=true;renderAdmin()"><div class="v">${bad}</div><div class="l">今月の勤怠異常</div></div>
+      <div class="kpi" onclick="S.aTab='shift';renderAdmin()"><div class="v">${want}</div><div class="l">未確定の希望シフト</div></div>
+    </div>
+    <h3 style="margin:4px 0 10px">今日 ${dLabel(today)} の状況</h3>
+    <div class="stores-grid">${cards}</div>`;
+}
+
+/* ---------- シフト表 ---------- */
+function aShift() {
+  const a = A(), days = daysOf(S.aym), today = a.today;
+  const pre = S.aym.replace('-', '/') + '/';
+  const stores = S.aStore ? [S.aStore] : a.stores;
+  const want = a.shifts.filter(s => s.date.startsWith(pre) && s.status === '希望' && (!S.aStore || s.store === S.aStore)).length;
+  $('#aExtra').innerHTML = `<button class="btn green sm" ${want ? '' : 'disabled'} onclick="bulkConfirm()">希望${want}件を一括確定</button>
+    <button class="btn ghost sm" onclick="dlShiftCsv()">CSV</button>
+    ${a.locked ? '<span class="chip c-gray">スタッフ提出締切済</span>' : '<span class="chip c-yet">スタッフ提出受付中</span>'}`;
+  const head = `<tr><th class="nm">スタッフ</th>${days.map(d => { const w = new Date(d).getDay(); return `<th class="${w === 0 ? 'su' : w === 6 ? 'sa' : ''}">${Number(d.slice(-2))}<br>${'日月火水木金土'[w]}</th>`; }).join('')}<th>確定</th></tr>`;
+  const html = stores.map(st => {
+    const staff = a.staff.filter(s => s.stores.includes(st) && s.status !== '停止').map(s => s.name);
+    a.shifts.filter(s => s.store === st && s.date.startsWith(pre) && !staff.includes(s.staff)).forEach(s => staff.push(s.staff));
+    const body = staff.map(n => {
+      let fixed = 0;
+      const tds = days.map(d => {
+        const s = a.shifts.find(x => x.date === d && x.store === st && x.staff === n);
+        const cls = !s ? '' : s.status === '確定' ? 'fixd' : s.status === '希望' ? 'want' : 'ng';
+        if (s && s.status === '確定') fixed++;
+        const lbl = !s ? '' : s.status === '確定' ? '●' : s.status === '希望' ? '希' : '×';
+        return `<td class="cell ${cls} ${d === today ? 'today' : ''}" onclick="cellTap('${d}','${esc(st)}','${esc(n)}')">${lbl}</td>`;
+      }).join('');
+      return `<tr><td class="nm">${esc(n)}</td>${tds}<td class="num"><b>${fixed}</b></td></tr>`;
+    }).join('');
+    const tot = days.map(d => {
+      const c = a.shifts.filter(x => x.date === d && x.store === st && x.status === '確定').length;
+      return `<td style="${c ? '' : 'color:var(--red);font-weight:bold'}">${c || '0'}</td>`;
+    }).join('');
+    return `<h3 style="margin:14px 0 6px">${esc(st)}</h3><div class="tbl-wrap"><table class="grid"><thead>${head}</thead><tbody>${body}
+      <tr class="tot"><td class="nm">確定人数</td>${tot}<td></td></tr></tbody></table></div>`;
+  }).join('');
+  $('#aBody').innerHTML = `<div class="legend" style="margin-bottom:6px"><span style="--c:#fef7e0">希＝希望</span><span style="--c:#e6f4ea">●＝確定</span><span style="--c:#f1f3f4">×＝不可</span><span>セルをタップで変更／確定人数0の日は赤</span></div>` + html;
+}
+function cellTap(d, st, n) {
+  const s = A().shifts.find(x => x.date === d && x.store === st && x.staff === n);
+  modal(`<h3>${esc(n)}　${dLabel(d)}</h3><div class="muted">${esc(st)}　現在：${s ? esc(s.status) : 'なし'}</div>
+    <div class="btns" style="margin-top:14px;flex-wrap:wrap">
+      <button class="btn green" onclick="setShift('${d}','${esc(st)}','${esc(n)}','確定')">確定</button>
+      <button class="btn ghost" onclick="setShift('${d}','${esc(st)}','${esc(n)}','不可')">不可</button>
+      <button class="btn red" onclick="setShift('${d}','${esc(st)}','${esc(n)}','削除')">消す</button></div>`);
+}
+async function setShift(date, store, staff, status) {
+  modal('');
+  await api('adminSetShift', { date, store, staff, status });
+  // 画面を即時更新（再取得は裏で）
+  const a = A(), i = a.shifts.findIndex(x => x.date === date && x.store === store && x.staff === staff);
+  if (status === '削除') { if (i >= 0) a.shifts.splice(i, 1); }
+  else if (i >= 0) a.shifts[i].status = status; else a.shifts.push({ date, store, staff, status });
+  renderAdmin();
+}
+async function bulkConfirm() {
+  if (!confirm(`${ymLabel(S.aym)} ${S.aStore || '全店舗'} の希望シフトをすべて確定します`)) return;
+  toast(await api('adminBulkConfirm', { ym: S.aym, store: S.aStore })); loadAdmin();
+}
+
+/* ---------- 勤怠 ---------- */
+function aAtt() {
+  const a = A();
+  let rows = attRows().filter(r => (!S.aStore || r.store === S.aStore) && (!S.aStaff || r.staff === S.aStaff) && (!S.onlyBad || r.flags.length));
+  const k = S.sort.key, dir = S.sort.asc ? 1 : -1;
+  rows.sort((x, y) => ((x[k] ?? '') > (y[k] ?? '') ? 1 : (x[k] ?? '') < (y[k] ?? '') ? -1 : 0) * dir || (x.date > y.date ? 1 : -1));
+  const names = [...new Set(a.staff.filter(s => s.stores.length).map(s => s.name))];
+  $('#aExtra').innerHTML = `<select onchange="S.aStaff=this.value;renderAdmin()"><option value="">全スタッフ</option>${names.map(n => `<option ${n === S.aStaff ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+    <label><input type="checkbox" ${S.onlyBad ? 'checked' : ''} onchange="S.onlyBad=this.checked;renderAdmin()">異常のみ</label>
+    <button class="btn ghost sm" onclick="punchForm()">＋打刻を入力</button>
+    <button class="btn ghost sm" onclick="dlAttCsv()">CSV</button>`;
+  const th = (key, l, cls = '') => `<th class="${cls} ${S.sort.key === key ? 'sorted' + (S.sort.asc ? ' asc' : '') : ''}" onclick="sortBy('${key}')">${l}</th>`;
+  $('#aBody').innerHTML = `<div class="muted" style="margin-bottom:6px">${rows.length}件　行をタップで打刻を修正</div><div class="tbl-wrap"><table>
+    <thead><tr>${th('date', '日付')}${th('store', '店舗')}${th('staff', 'スタッフ')}${th('plan', 'シフト')}${th('in', '出勤')}${th('out', '退勤')}${th('min', '時間', 'num')}<th>チェック</th><th>状態</th><th>位置</th></tr></thead>
+    <tbody>${rows.map(r => `<tr class="${r.flags.length ? 'bad' : ''}" onclick="punchForm('${r.date}','${esc(r.store)}','${esc(r.staff)}')">
+      <td>${dLabel(r.date)}</td><td>${esc(r.store)}</td><td>${esc(r.staff)}</td><td>${r.plan ? '●' : ''}</td>
+      <td>${r.in || ''}</td><td>${r.out || ''}</td><td class="num">${r.min != null ? hm(r.min) : ''}</td>
+      <td class="muted">${esc(r.checks)}</td>
+      <td>${r.flags.map(f => `<span class="chip ${f === 'シフト外' || f === 'チェック不足' ? 'c-yet' : 'c-ng'}">${f}</span>`).join(' ')}${r.edited ? ` <span class="chip c-gray" title="${esc(r.edited)}">修正済</span>` : ''}</td>
+      <td>${r.inP && r.inP.lat ? `<a href="https://maps.google.com/?q=${r.inP.lat},${r.inP.lng}" target="_blank" onclick="event.stopPropagation()">地図</a>` : ''}${r.dist >= 0 ? `<br><span class="muted">${r.dist >= 1000 ? (r.dist / 1000).toFixed(1) + 'km' : r.dist + 'm'}</span>` : ''}</td></tr>`).join('') || '<tr><td colspan="10" class="muted">データなし</td></tr>'}</tbody></table></div>`;
+}
+function sortBy(k) { S.sort = { key: k, asc: S.sort.key === k ? !S.sort.asc : true }; renderAdmin(); }
+function punchForm(date, store, staff) {
+  const a = A();
+  const d = date || a.today;
+  modal(`<h3>打刻の入力・修正（管理者）</h3>
+    <label>日付</label><input type="date" id="apDate" value="${d.replace(/\//g, '-')}">
+    <label>店舗</label><select id="apStore">${a.stores.map(s => `<option ${s === store ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+    <label>スタッフ</label><select id="apStaff">${a.staff.filter(s => s.stores.length && (s.status !== '停止' || s.name === staff)).map(s => `<option ${s.name === staff ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>
+    <label>出勤時刻（空欄で削除）</label><input type="time" id="apIn">
+    <label>退勤時刻（空欄で削除）</label><input type="time" id="apOut">
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="modal('')">やめる</button><button class="btn" onclick="savePunch()">保存</button></div>`);
+  const fill = () => {
+    const dd = $('#apDate').value.replace(/-/g, '/'), st = $('#apStore').value, n = $('#apStaff').value;
+    const f = t => (a.punches.find(p => p.date === dd && p.store === st && p.staff === n && p.type === t) || {}).time || '';
+    $('#apIn').value = f('出勤'); $('#apOut').value = f('退勤');
+    $('#apIn').dataset.orig = $('#apIn').value; $('#apOut').dataset.orig = $('#apOut').value;
+  };
+  ['apDate', 'apStore', 'apStaff'].forEach(id => $('#' + id).onchange = fill); fill();
+}
+async function savePunch() {
+  const base = { date: $('#apDate').value.replace(/-/g, '/'), store: $('#apStore').value, staff: $('#apStaff').value };
+  const jobs = [['出勤', '#apIn'], ['退勤', '#apOut']].filter(([, id]) => $(id).value !== $(id).dataset.orig);
+  if (!jobs.length) return modal('');
+  for (const [type, id] of jobs) await api('adminPunch', { ...base, type, time: $(id).value });
+  modal(''); toast('✅ 保存しました'); loadAdmin();
+}
+
+/* ---------- 集計 ---------- */
+function aSum() {
+  const rows = sumRows().sort((x, y) => y.days - x.days || (x.staff > y.staff ? 1 : -1));
+  const t = rows.reduce((s, r) => ({ plan: s.plan + r.plan, days: s.days + r.days, min: s.min + r.min, prev: s.prev + r.prev }), { plan: 0, days: 0, min: 0, prev: 0 });
+  // 店舗別
+  const att = attRows().filter(r => !S.aStore || r.store === S.aStore);
+  const byStore = A().stores.filter(s => !S.aStore || s === S.aStore).map(st => {
+    const rs = att.filter(r => r.store === st);
+    return { st, plan: rs.filter(r => r.plan).length, days: rs.filter(r => r.in).length, min: rs.reduce((s, r) => s + (r.min || 0), 0), done: rs.filter(r => r.min != null).length, bad: rs.filter(r => r.flags.length).length,
+      noShift: daysOf(S.aym).filter(d => !A().shifts.some(x => x.date === d && x.store === st && x.status === '確定')).length };
+  });
+  $('#aExtra').innerHTML = `<div class="seg" style="flex:none"><button class="${S.sumView === 'staff' ? 'on' : ''}" onclick="S.sumView='staff';renderAdmin()">スタッフ別</button><button class="${S.sumView === 'store' ? 'on' : ''}" onclick="S.sumView='store';renderAdmin()">店舗別</button></div>
+    <button class="btn ghost sm" onclick="dlSumCsv()">CSV（給与用）</button>
+    <button class="btn ghost sm" onclick="writeSummary()">シートに出力</button>`;
+  const diff = (a, b) => { const d = a - b; return d === 0 ? '<span class="muted">±0</span>' : `<span style="color:${d > 0 ? 'var(--green)' : 'var(--red)'}">${d > 0 ? '+' : ''}${d}</span>`; };
+  $('#aBody').innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="v">${t.days}</div><div class="l">実績日数（前月 ${t.prev}・${diff(t.days, t.prev)}）</div></div>
+      <div class="kpi"><div class="v">${t.plan}</div><div class="l">確定シフト日数</div></div>
+      <div class="kpi"><div class="v">${t.plan ? Math.round(t.days / t.plan * 100) : 0}%</div><div class="l">シフト消化率</div></div>
+      <div class="kpi"><div class="v">${hm(t.min)}</div><div class="l">合計作業時間</div></div>
+    </div>
+    ${S.sumView === 'staff' ? `<div class="tbl-wrap"><table><thead><tr><th>スタッフ</th><th>店舗</th><th class="num">予定</th><th class="num">実績</th><th class="num">差</th><th class="num">前月</th><th class="num">前月比</th><th class="num">時間</th><th class="num">異常</th></tr></thead>
+      <tbody>${rows.map(r => `<tr class="${r.bad ? 'bad' : ''}" onclick="S.aTab='att';S.aStaff='${esc(r.staff)}';S.aStore='${esc(r.stores)}';renderAdmin()"><td><b>${esc(r.staff)}</b></td><td class="muted">${esc(r.stores)}</td><td class="num">${r.plan}</td><td class="num"><b>${r.days}</b></td>
+      <td class="num">${diff(r.days, r.plan)}</td><td class="num">${r.prev}</td><td class="num">${diff(r.days, r.prev)}</td><td class="num">${hm(r.min)}</td><td class="num">${r.bad ? `<span class="chip c-ng">${r.bad}</span>` : ''}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted">行をタップ → そのスタッフの勤怠明細へ</p>`
+    : `<div class="tbl-wrap"><table><thead><tr><th>店舗</th><th class="num">確定シフト</th><th class="num">実績日数</th><th class="num">作業時間</th><th class="num">1回平均</th><th class="num">異常</th><th class="num">シフト空白日</th></tr></thead>
+      <tbody>${byStore.map(r => `<tr onclick="S.aTab='att';S.aStore='${esc(r.st)}';renderAdmin()"><td><b>${esc(r.st)}</b></td><td class="num">${r.plan}</td><td class="num">${r.days}</td><td class="num">${hm(r.min)}</td>
+      <td class="num">${r.done ? hm(Math.round(r.min / r.done)) : ''}</td><td class="num">${r.bad || ''}</td><td class="num">${r.noShift ? `<span class="chip c-yet">${r.noShift}日</span>` : 0}</td></tr>`).join('')}</tbody></table></div>`}`;
+}
+async function writeSummary() { toast(await api('adminWriteSummary', { ym: S.aym })); }
+
+/* ---------- 承認 ---------- */
+function aReq() {
+  const a = A();
+  const ps = a.staff.filter(s => s.status === '申請中');
+  const fx = a.fixes.filter(f => f.status === '申請中');
+  $('#aBody').innerHTML = `
+    <div class="card"><h3>スタッフ登録の承認（${ps.length}）</h3><div class="list">
+      ${ps.map(s => `<div class="it"><div><b>${esc(s.name)}</b> <span class="muted">${esc(s.stores.join('・'))}</span><br><span class="muted">LINE名：${esc(s.lineName)}／${esc(s.registered)}</span></div>
+        <div style="display:flex;gap:6px"><button class="btn ghost sm" onclick="staffForm(${s.row})">編集</button><button class="btn green sm" onclick="quickApprove(${s.row})">承認</button></div></div>`).join('') || '<div class="muted">なし</div>'}
+    </div></div>
+    <div class="card"><h3>打刻修正申請（${fx.length}）</h3><div class="list">
+      ${fx.map(f => {
+        const cur = a.punches.find(p => p.date === f.date && p.store === f.store && p.staff === f.staff && p.type === f.type);
+        return `<div class="it"><div><b>${esc(f.staff)}</b>　${dLabel(f.date)} ${esc(f.store)}<br>
+          ${esc(f.type)}：${cur ? esc(cur.time) : '記録なし'} → <b>${esc(f.time)}</b><br><span class="muted">理由：${esc(f.reason)}</span></div>
+          <div style="display:flex;gap:6px"><button class="btn ghost sm" onclick="decideFix('${f.id}','却下')">却下</button><button class="btn green sm" onclick="decideFix('${f.id}','承認')">承認</button></div></div>`;
+      }).join('') || '<div class="muted">なし</div>'}
+    </div></div>`;
+}
+async function quickApprove(row) {
+  const s = A().staff.find(x => x.row === row);
+  toast(await api('adminSaveStaff', { row, name: s.name, stores: s.stores, role: s.role, status: '承認' })); loadAdmin();
+}
+async function decideFix(id, decision) { toast(await api('adminDecideFix', { id, decision })); loadAdmin(); }
+
+/* ---------- スタッフ管理 ---------- */
+function aStaff() {
+  const a = A();
+  // 退職者（停止）は「停止中も表示」のときだけ、一覧の最後に出す
+  const rows = a.staff.filter(s => (!S.aStore || s.stores.includes(S.aStore)) && (S.showStopped || s.status !== '停止'))
+    .sort((x, y) => (x.status === '停止') - (y.status === '停止'));
+  const nStop = a.staff.filter(s => s.status === '停止').length;
+  const chip = st => `<span class="chip ${st === '承認' ? 'c-ok' : st === '申請中' ? 'c-yet' : st === '停止' ? 'c-ng' : 'c-gray'}">${esc(st)}</span>`;
+  $('#aExtra').innerHTML = `<button class="btn ghost sm" onclick="staffForm()">＋スタッフ追加</button>
+    ${nStop ? `<label class="muted" style="display:flex;align-items:center;gap:4px"><input type="checkbox" style="width:auto" ${S.showStopped ? 'checked' : ''} onchange="S.showStopped=this.checked;renderAdmin()">停止中（退職）も表示（${nStop}名）</label>` : ''}`;
+  $('#aBody').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>氏名</th><th>店舗</th><th>状態</th><th>権限</th><th>LINE</th><th>登録日</th></tr></thead>
+    <tbody>${rows.map(s => `<tr onclick="staffForm(${s.row})"><td><b>${esc(s.name)}</b></td><td>${s.stores.length ? esc(s.stores.join('・')) : '<span class="muted">本部（店舗なし）</span>'}</td><td>${chip(s.status)}</td>
+      <td>${s.role === 'admin' ? '<span class="chip c-blue">管理者</span>' : 'スタッフ'}</td><td class="muted">${s.userId ? esc(s.lineName || '連携済') : '未連携'}</td><td class="muted">${esc(s.registered)}</td></tr>`).join('')}</tbody></table></div>
+    <p class="muted">「未連携」の人には LIFF のURLを送って登録してもらう → 承認タブで承認</p>`;
+}
+function staffForm(row) {
+  const a = A(), s = a.staff.find(x => x.row === row) || { name: '', stores: S.aStore ? [S.aStore] : [], status: '未登録', role: 'staff' };
+  modal(`<h3>${row ? 'スタッフ編集' : 'スタッフ追加'}</h3>
+    <label>氏名</label><input id="sfName" value="${esc(s.name)}">
+    <label>担当店舗（複数可・管理者は空欄で本部扱い）</label><div class="checks" id="sfStores">${a.stores.map(st => `<div class="ci ${s.stores.includes(st) ? 'on' : ''}" data-v="${esc(st)}" onclick="this.classList.toggle('on');this.querySelector('i').textContent=this.classList.contains('on')?'✅':'⬜'"><i>${s.stores.includes(st) ? '✅' : '⬜'}</i>${esc(st)}</div>`).join('')}</div>
+    <label>状態（退職・休止は「停止」）</label><select id="sfStatus" onchange="$('#sfStopBox').classList.toggle('hide',this.value!=='停止')">${['未登録', '申請中', '承認', '停止'].map(x => `<option ${x === s.status ? 'selected' : ''}>${x}</option>`).join('')}</select>
+    <div id="sfStopBox" class="${s.status === '停止' && row ? '' : 'hide'}" style="background:#fdecea;border-radius:8px;padding:8px 10px;margin-top:8px;font-size:13px">
+      停止にすると：アプリが開けなくなる／登録画面の名前一覧から消える／シフト表・打刻入力に出なくなる。過去の打刻・集計は残る。
+      ${row ? `<label style="margin-top:6px"><input type="checkbox" id="sfDrop" style="width:auto" checked> 明日以降のシフトも削除する</label>` : ''}</div>
+    <label>権限</label><select id="sfRole"><option value="staff">スタッフ</option><option value="admin" ${s.role === 'admin' ? 'selected' : ''}>管理者</option></select>
+    ${row && s.userId && s.name !== S.me.profile.name ? `<label><input type="checkbox" id="sfUnlink" style="width:auto"> LINE連携を解除する（機種変更・別人の誤登録時）</label>` : ''}
+    <div class="btns" style="margin-top:14px"><button class="btn ghost" onclick="modal('')">やめる</button><button class="btn" onclick="saveStaff(${row || 0})">保存</button></div>`);
+}
+async function saveStaff(row) {
+  const p = { row: row || null, name: $('#sfName').value.trim(), stores: [...document.querySelectorAll('#sfStores .ci.on')].map(x => x.dataset.v),
+    status: $('#sfStatus').value, role: $('#sfRole').value, unlink: !!($('#sfUnlink') && $('#sfUnlink').checked),
+    dropFuture: !!($('#sfDrop') && $('#sfDrop').checked) };
+  toast(await api('adminSaveStaff', p)); modal(''); loadAdmin();
+}
+
+/* ---------- CSV ---------- */
+function csv(name, head, rows) {
+  const body = [head].concat(rows).map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+  const blob = new Blob(['﻿' + body], { type: 'text/csv' });
+  if (!DEMO && liff.isInClient()) {
+    // LINE内ブラウザはダウンロード不可 → 外部ブラウザで開くよう案内
+    return toast('CSVはPCかスマホのブラウザで管理画面を開いて出力してください（LINE内では保存不可）', true);
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+function dlSumCsv() {
+  csv(`清掃勤怠集計_${S.aym}.csv`, ['対象月', 'スタッフ', '店舗', '予定日数', '実績日数', '差', '前月実績', '作業時間(分)', '作業時間(h:mm)', '異常件数'],
+    sumRows().map(r => [S.aym, r.staff, r.stores, r.plan, r.days, r.days - r.plan, r.prev, r.min, hm(r.min), r.bad]));
+}
+function dlAttCsv() {
+  csv(`清掃勤怠明細_${S.aym}.csv`, ['日付', '店舗', 'スタッフ', 'シフト', '出勤', '退勤', '作業分', 'チェック', '異常', '修正'],
+    attRows().filter(r => !S.aStore || r.store === S.aStore).sort((x, y) => x.date > y.date ? 1 : -1)
+      .map(r => [r.date, r.store, r.staff, r.plan ? '確定' : '', r.in || '', r.out || '', r.min ?? '', r.checks, r.flags.join('・'), r.edited || '']));
+}
+function dlShiftCsv() {
+  const pre = S.aym.replace('-', '/') + '/';
+  csv(`清掃シフト_${S.aym}.csv`, ['勤務日', '店舗', 'スタッフ', '状態'],
+    A().shifts.filter(s => s.date.startsWith(pre) && (!S.aStore || s.store === S.aStore)).sort((x, y) => x.date > y.date ? 1 : -1).map(s => [s.date, s.store, s.staff, s.status]));
+}
+
+/* =========================================================
+ * デモモード（端末内のダミーデータ。本番では使われない）
+ * =======================================================*/
+const Demo = (() => {
+  const STORES = ['下到津店', '長府店', '星ヶ丘店', '水巻町店', '頓野店', '曽根店', '白銀店', '宗像店', '中間店', '熊本町店'];
+  const GEO = { '下到津店': [33.879951, 130.856689], '長府店': [34.009048, 130.992157], '星ヶ丘店': [33.774166, 130.748566], '水巻町店': [33.851006, 130.694839],
+    '頓野店': [33.753258, 130.749222], '曽根店': [33.845432, 130.945541], '白銀店': [33.870144, 130.874329], '宗像店': [33.792377, 130.530365], '中間店': [33.829113, 130.710190], '熊本町店': [33.868176, 130.890045] };
+  const CHECK = ['洗濯槽', '床・排水溝', 'ゴミ回収', '外観・駐車場', '備品確認'];
+  const today = ds(new Date()), ym = ymOf(new Date()), pre = ym.replace('-', '/') + '/';
+  const role = new URLSearchParams(location.search).get('role') || 'admin';
+  const db = {
+    staff: [
+      ['本部 太郎', [], 'U0', '承認', 'admin'], ['スタッフA', ['水巻町店', '中間店'], 'U1', '承認', 'staff'],
+      ['スタッフB', ['水巻町店'], 'U2', '承認', 'staff'], ['スタッフC', ['長府店'], 'U3', '承認', 'staff'], ['スタッフD', ['長府店'], 'U4', '申請中', 'staff'],
+      ['スタッフE', ['星ヶ丘店', '頓野店'], 'U5', '承認', 'staff'], ['スタッフF', ['曽根店'], '', '未登録', 'staff'], ['スタッフG', ['中間店'], 'U6', '停止', 'staff'],   // 退職済み（過去の打刻だけ残る例）
+      // 以下は名簿（Code.gs SEED_STAFF）の残り
+      ['スタッフH', ['長府店'], 'U7', '承認', 'staff'], ['スタッフI', ['星ヶ丘店'], 'U8', '承認', 'staff'], ['スタッフJ', ['白銀店'], 'U9', '承認', 'staff'],
+      ['スタッフK', ['白銀店'], 'U10', '承認', 'staff'], ['スタッフL', ['曽根店'], 'U11', '承認', 'staff'], ['スタッフM', ['下到津店'], 'U12', '承認', 'staff'],
+      ['スタッフN', ['水巻町店'], 'U13', '承認', 'staff'], ['スタッフO', ['頓野店'], 'U14', '承認', 'staff'], ['スタッフP', ['宗像店'], 'U15', '承認', 'staff'],
+      ['スタッフQ', ['宗像店'], 'U16', '承認', 'staff'], ['スタッフR', ['熊本町店'], 'U17', '承認', 'staff']
+    ].map((s, i) => ({ row: i + 2, name: s[0], stores: s[1], userId: s[2], lineName: s[2] ? s[0].split(' ')[0] : '', status: s[3], role: s[4], registered: '2026/09/2' + (i % 9) })),
+    punches: [], shifts: [], fixes: [{ id: 'f1', requested: today, staff: 'スタッフB', date: ds(new Date(Date.now() - 2 * 864e5)), store: '水巻町店', type: '退勤', time: '11:30', reason: '押し忘れ', status: '申請中' }],
+    prevDays: { 'スタッフA|水巻町店': 8, 'スタッフA|中間店': 6, 'スタッフB|水巻町店': 9, 'スタッフC|長府店': 12, 'スタッフE|星ヶ丘店': 16, 'スタッフG|中間店': 8 }
+  };
+  // 今月のダミーシフト・打刻
+  daysOf(ym).forEach((d, i) => {
+    [['スタッフA', '水巻町店', 0], ['スタッフB', '水巻町店', 1], ['スタッフC', '長府店', 0], ['スタッフE', '星ヶ丘店', 1], ['スタッフG', '中間店', 0], ['スタッフA', '中間店', 1]].forEach(([n, st, odd]) => {
+      if (i % 2 !== odd || (n === 'スタッフG' && d > today)) return;
+      db.shifts.push({ date: d, store: st, staff: n, status: d > ds(new Date(Date.now() + 10 * 864e5)) ? '希望' : '確定' });
+      if (d < today && !(n === 'スタッフG' && i === 4)) {
+        const h = 9 + (i % 2);
+        const g = GEO[st], far = n === 'スタッフB' && i === 9;   // 1件だけ約1.5km離れた打刻
+        db.punches.push({ date: d, store: st, staff: n, type: '出勤', time: `${String(h).padStart(2, '0')}:0${i % 6}`, checks: '', kind: 'LIFF',
+          lat: (g[0] + (far ? 0.0135 : 0.0003)).toFixed(5), lng: (g[1] + 0.0002).toFixed(5) });
+        if (!(n === 'スタッフE' && i === 7)) db.punches.push({ date: d, store: st, staff: n, type: '退勤', time: `${String(h + 1).padStart(2, '0')}:${10 + i % 40}`, checks: i % 5 ? CHECK.join('、') : CHECK.slice(0, 3).join('、'), kind: 'LIFF' });
+      }
+    });
+  });
+  db.punches.push({ date: today, store: '水巻町店', staff: 'スタッフB', type: '出勤', time: '09:12', checks: '', kind: 'LIFF' });
+  // demo_names.js（ローカル専用・GitHubには上げない）があれば、ダミー名を実名に置き換えて表示する
+  if (window.DEMO_NAMES) {
+    let j = JSON.stringify(db);
+    Object.entries(window.DEMO_NAMES).forEach(([k, v]) => { j = j.split(k).join(v); });
+    Object.assign(db, JSON.parse(j));
+  }
+  const me = () => role === 'staff' ? db.staff[1] : db.staff[0];
+  const wait = v => new Promise(r => setTimeout(() => r(JSON.parse(JSON.stringify(v))), 250));
+  const locked = y => ds(new Date()) > y.replace('-', '/') + '/10';
+  const now = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  const H = {
+    me: () => ({ lineName: 'デモ', status: '承認', profile: { name: me().name, stores: me().stores, role: me().role }, config: { stores: STORES, checklist: CHECK, deadlineDay: 10, geo: GEO, geoRadius: 200 }, today }),
+    home: () => ({ today, pendingFix: 0,
+      stores: me().stores.map(st => ({ store: st, inTime: (db.punches.find(p => p.date === today && p.store === st && p.staff === me().name && p.type === '出勤') || {}).time || null,
+        outTime: (db.punches.find(p => p.date === today && p.store === st && p.staff === me().name && p.type === '退勤') || {}).time || null,
+        todayShift: db.shifts.filter(s => s.date === today && s.store === st && s.status === '確定').map(s => s.staff) })),
+      upcoming: db.shifts.filter(s => s.staff === me().name && s.status === '確定' && s.date >= today).sort((a, b) => a.date > b.date ? 1 : -1).slice(0, 7) }),
+    punch: p => {
+      if (db.punches.some(x => x.date === today && x.store === p.store && x.staff === me().name && x.type === p.type)) return { message: p.type + 'は本日すでに記録済みです', duplicated: true };
+      const t = now(); db.punches.push({ date: today, store: p.store, staff: me().name, type: p.type, time: t, checks: (p.checks || []).join('、'), kind: 'LIFF', lat: p.lat, lng: p.lng });
+      return { message: today + ' ' + t + '　' + p.store + '　' + p.type + 'を記録しました（デモ）', time: t };
+    },
+    myMonth: p => { const pr = p.ym.replace('-', '/') + '/'; return { ym: p.ym, locked: locked(p.ym),
+      punches: db.punches.filter(x => x.staff === me().name && x.date.startsWith(pr)), shifts: db.shifts.filter(x => x.staff === me().name && x.date.startsWith(pr)),
+      fixes: db.fixes.filter(x => x.staff === me().name && x.date.startsWith(pr)) }; },
+    submitShifts: p => {
+      const pr = p.ym.replace('-', '/') + '/';
+      db.shifts = db.shifts.filter(s => !(s.staff === me().name && s.store === p.store && s.date.startsWith(pr) && s.status === '希望' && !p.dates.includes(s.date)));
+      p.dates.forEach(d => { if (!db.shifts.some(s => s.staff === me().name && s.store === p.store && s.date === d)) db.shifts.push({ date: d, store: p.store, staff: me().name, status: '希望' }); });
+      return '希望シフトを提出しました（デモ）';
+    },
+    requestFix: p => { db.fixes.push({ id: 'f' + Date.now(), requested: today, staff: me().name, ...p, status: '申請中' }); return '修正申請を送りました（デモ）'; },
+    adminData: p => { const pr = p.ym.replace('-', '/') + '/'; return { ym: p.ym, prevYm: addYm(p.ym, -1), today, stores: STORES, staff: db.staff,
+      punches: db.punches.filter(x => x.date.startsWith(pr) || x.date === today), shifts: db.shifts.filter(x => x.date.startsWith(pr) || x.date === today),
+      fixes: db.fixes, prevDays: p.ym === ym ? db.prevDays : {}, locked: locked(p.ym) }; },
+    adminSaveStaff: p => {
+      const s = db.staff.find(x => x.row === p.row);
+      if (s) Object.assign(s, { name: p.name, stores: p.stores, status: p.unlink && p.status !== '停止' ? '未登録' : p.status, role: p.role }, p.unlink ? { userId: '', lineName: '' } : {});
+      if (s && p.status === '停止' && p.dropFuture) {
+        const n = db.shifts.length; db.shifts = db.shifts.filter(x => !(x.staff === p.name && x.date > today));
+        return `保存しました（明日以降のシフト${n - db.shifts.length}件を削除・デモ）`;
+      }
+      if (!s) db.staff.push({ row: db.staff.length + 2, name: p.name, stores: p.stores, userId: '', lineName: '', status: '未登録', role: p.role, registered: '' });
+      return '保存しました（デモ）';
+    },
+    adminSetShift: p => { const i = db.shifts.findIndex(x => x.date === p.date && x.store === p.store && x.staff === p.staff);
+      if (p.status === '削除') { if (i >= 0) db.shifts.splice(i, 1); } else if (i >= 0) db.shifts[i].status = p.status; else db.shifts.push({ date: p.date, store: p.store, staff: p.staff, status: p.status }); return 'ok'; },
+    adminBulkConfirm: p => { let n = 0; db.shifts.forEach(s => { if (s.status === '希望' && s.date.startsWith(p.ym.replace('-', '/') + '/') && (!p.store || s.store === p.store)) { s.status = '確定'; n++; } }); return n + '件を確定しました（デモ）'; },
+    adminDecideFix: p => { const f = db.fixes.find(x => x.id === p.id); f.status = p.decision;
+      if (p.decision === '承認') { const x = db.punches.find(q => q.date === f.date && q.store === f.store && q.staff === f.staff && q.type === f.type);
+        if (x) { x.time = f.time; x.kind = '修正'; } else db.punches.push({ date: f.date, store: f.store, staff: f.staff, type: f.type, time: f.time, checks: '', kind: '修正' }); }
+      return p.decision + 'しました（デモ）'; },
+    adminPunch: p => { const i = db.punches.findIndex(q => q.date === p.date && q.store === p.store && q.staff === p.staff && q.type === p.type);
+      if (!p.time) { if (i >= 0) db.punches.splice(i, 1); return '削除しました'; }
+      if (i >= 0) { db.punches[i].time = p.time; db.punches[i].kind = '管理者入力'; } else db.punches.push({ date: p.date, store: p.store, staff: p.staff, type: p.type, time: p.time, checks: '', kind: '管理者入力' });
+      return '保存しました（デモ）'; },
+    adminWriteSummary: p => '「月次集計」シートに ' + p.ym + ' を出力しました（デモ）'
+  };
+  return { call: (a, p) => H[a] ? wait(H[a](p)) : Promise.reject(new Error('不明な操作: ' + a)) };
+})();
+
+boot();
+</script>
+</body>
+</html>
