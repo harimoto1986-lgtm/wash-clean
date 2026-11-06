@@ -156,8 +156,8 @@
 /* =========================================================
  * 設定（導入時にここだけ書き換える）
  * =======================================================*/
-const LIFF_ID = '';   // LINE Developers ＞ LIFF ＞ LIFF ID（例：2001234567-AbCdEfGh）
-const GAS_URL = '';   // GASのウェブアプリURL（https://script.google.com/macros/s/.../exec）
+const LIFF_ID = '2012412900-PdZ6VdSc';   // LINEミニアプリ「THE WASH 清掃スタッフ」本番用のLIFF ID（開発用で試す時は 2012412898-… に差し替え）
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyGkZxU3PHvUhova2UuBkLWAx0ntO1g8OpQCH3V9fraozHEDWhwHgvuQ30Vbqiu5nvoQA/exec';   // 清掃打刻スプレッドシートのGASウェブアプリ
 
 // LIFF_ID が空、または URL に ?demo=1 を付けると、端末内のダミーデータで動くデモモード（見た目確認用）
 const DEMO = !LIFF_ID || new URLSearchParams(location.search).has('demo');
@@ -847,7 +847,7 @@ const Demo = (() => {
   // 今月のダミーシフト・打刻
   daysOf(ym).forEach((d, i) => {
     [['スタッフA', '水巻町店', 0], ['スタッフB', '水巻町店', 1], ['スタッフC', '長府店', 0], ['スタッフE', '星ヶ丘店', 1], ['スタッフG', '中間店', 0], ['スタッフA', '中間店', 1]].forEach(([n, st, odd]) => {
-      if (i % 2 !== odd || (n === 'スタッフG' && d > today)) return;
+      if (i % 2 !== odd || (n === 'スタッフG' && d >= today)) return;   // 退職者は今日以降のシフトなし
       db.shifts.push({ date: d, store: st, staff: n, status: d > ds(new Date(Date.now() + 10 * 864e5)) ? '希望' : '確定' });
       if (d < today && !(n === 'スタッフG' && i === 4)) {
         const h = 9 + (i % 2);
