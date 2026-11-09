@@ -156,7 +156,7 @@
 /* =========================================================
  * 設定（導入時にここだけ書き換える）
  * =======================================================*/
-const LIFF_ID = '2012412898-anSeFfTz';   // LINEミニアプリ「THE WASH 清掃スタッフ」開発用のLIFF ID（審査通過後は本番用 2012412900-PdZ6VdSc に差し替え）
+const LIFF_ID = '2012412900-PdZ6VdSc';   // LINEミニアプリ「THE WASH 清掃スタッフ」本番用のLIFF ID（未認証ミニアプリとして審査なしで公開。開発用は 2012412898-anSeFfTz）
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyGkZxU3PHvUhova2UuBkLWAx0ntO1g8OpQCH3V9fraozHEDWhwHgvuQ30Vbqiu5nvoQA/exec';   // 清掃打刻スプレッドシートのGASウェブアプリ
 
 // LIFF_ID が空、または URL に ?demo=1 を付けると、端末内のダミーデータで動くデモモード（見た目確認用）
@@ -223,6 +223,9 @@ async function api(action, params = {}, quiet) {
 async function boot() {
   try {
     if (!DEMO) {
+      // LINEのSDKが読めなかった時（広告ブロック・通信不良）は、別URLから1回だけ読み直す
+      if (typeof liff === 'undefined') await new Promise(ok => { const s = document.createElement('script'); s.src = 'https://static.line-scdn.net/liff/edge/versions/2.24.0/sdk.js'; s.onload = s.onerror = ok; document.head.appendChild(s); });
+      if (typeof liff === 'undefined') throw new Error('LINEの部品を読み込めませんでした。スマホのLINEアプリから開くか、広告ブロックを切って再読み込みしてください');
       await liff.init({ liffId: LIFF_ID });
       if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
     }
